@@ -1,0 +1,46 @@
+version: '3'
+
+services:
+  php:
+    container_name: php
+    image: bitnami/php-fpm:8.1
+    restart: always
+    volumes:
+      - ${PWD}/app:/app
+
+  nginx:
+    container_name: nginx
+    image: nginx:latest
+    restart: always
+    depends_on:
+      - php
+    volumes:
+      - ./conf/nginx:/etc/nginx/conf.d
+      - ${PWD}/app:/app
+    ports:
+      - '80:80'
+
+  mysql:
+    container_name: mysql
+    image: mysql:8
+    restart: always
+    command: --default-authentication-plugin=mysql_native_password --skip-log-bin
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_PASSWORD}
+    ports:
+      - '3306:3306'
+    volumes:
+      - ${MYSQL_DATA_DIR}:/var/lib/mysql
+
+  redis:
+    container_name: redis
+    image: redis:7
+    restart: always
+    ports:
+      - '6379:6379'
+    volumes:
+      - ${PWD}/conf/redis:/usr/local/etc/redis
+      - ${REDIS_DATA_DIR}:/data
+    environment:
+      - REDIS_PASSWORD
+    command: ['redis-server','/usr/local/etc/redis/redis.conf']
